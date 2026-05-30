@@ -153,9 +153,7 @@ const FlashSaleBanner: React.FC = () => {
                         <div className="px-2 pb-2">
                            <div className="font-bold text-white text-base truncate mb-1">{banner.products[0].name}</div>
                            <div className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-500">
-                             {banner.products[0].category === 'NFTs' || banner.products[0].category === 'Digital Assets' 
-                                ? `${banner.products[0].priceCrypto} ETH` 
-                                : `$${banner.products[0].priceUSD}`}
+                              {`${banner.products[0].priceCrypto.toFixed(2)} USDC`}
                            </div>
                         </div>
                      </div>
@@ -175,9 +173,7 @@ const FlashSaleBanner: React.FC = () => {
                            <div className="flex items-center justify-between">
                               <div className="text-sm font-bold text-gray-400 uppercase tracking-wider">{banner.products[1].category}</div>
                               <div className={`text-base font-black text-transparent bg-clip-text bg-gradient-to-r ${banner.textGradient}`}>
-                                {banner.products[1].category === 'NFTs' || banner.products[1].category === 'Digital Assets' 
-                                   ? `${banner.products[1].priceCrypto} ETH` 
-                                   : `$${banner.products[1].priceUSD}`}
+                                  {`${banner.products[1].priceCrypto.toFixed(2)} USDC`}
                               </div>
                            </div>
                         </div>
@@ -193,9 +189,7 @@ const FlashSaleBanner: React.FC = () => {
                         <div className="px-2 pb-2">
                            <div className="font-bold text-white text-base truncate mb-1">{banner.products[2].name}</div>
                            <div className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-500">
-                             {banner.products[2].category === 'NFTs' || banner.products[2].category === 'Digital Assets' 
-                                ? `${banner.products[2].priceCrypto} ETH` 
-                                : `$${banner.products[2].priceUSD}`}
+                              {`${banner.products[2].priceCrypto.toFixed(2)} USDC`}
                            </div>
                         </div>
                      </div>

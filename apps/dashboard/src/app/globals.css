@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-white font-sans overflow-x-hidden antialiased;
+    background-image: theme('backgroundImage.grid-pattern');
+    background-attachment: fixed;
+  }
+}
+
+/* Custom glow text utility for Dashboard */
+.text-glow-pink {
+  text-shadow: 0 0 5px rgba(255, 0, 127, 0.4), 0 0 15px rgba(255, 0, 127, 0.2);
+}
+.text-glow-cyan {
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.4), 0 0 15px rgba(0, 255, 255, 0.2);
+}

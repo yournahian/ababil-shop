@@ -90,12 +90,14 @@ const generateMockProducts = (): Product[] => {
     
     categoryNames.forEach((name, i) => {
       // Ensure "Home Arrivals under 50" gets cheap items
-      let priceUSD = Math.floor(Math.random() * 2000) + 10;
+      // Max price is 5 USDC — generate between 0.50 and 5.00
+      let priceUSD = parseFloat((Math.random() * 4.5 + 0.5).toFixed(2));
       if (category === 'Home & Living' && i < 2) {
-        priceUSD = Math.floor(Math.random() * 30) + 15; // Force under 50
+        priceUSD = parseFloat((Math.random() * 2 + 0.5).toFixed(2)); // Slightly cheaper range
       }
 
-      const priceCrypto = parseFloat((priceUSD / 3000).toFixed(4));
+      // priceCrypto = USDC (1:1 peg)
+      const priceCrypto = priceUSD;
       
       const isB2B = category === 'Tech Hardware' || category === 'Apparel';
       const moq = isB2B ? Math.floor(Math.random() * 50) + 10 : undefined;

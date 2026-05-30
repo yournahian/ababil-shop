@@ -105,7 +105,7 @@ const Shop: React.FC = () => {
                   id={product.id}
                   title={product.name}
                   image={product.image}
-                  price={product.category === 'Tech Hardware' || product.category === 'Apparel' ? `$${product.priceUSD}` : `${product.priceCrypto} ETH`}
+                  price={`${product.priceCrypto.toFixed(2)} USDC`}
                   isWeb3={product.category === 'NFTs' || product.category === 'Digital Assets'}
                   rating={product.rating}
                   reviewCount={product.reviewCount}

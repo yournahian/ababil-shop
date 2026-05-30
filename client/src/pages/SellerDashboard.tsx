@@ -34,12 +34,11 @@ const SellerDashboard: React.FC = () => {
   const [priceCrypto, setPriceCrypto] = useState('');
   const [imageUrl, setImageUrl] = useState('');
 
-  const ETH_RATE = 3500;
-
   const handlePriceUSDChange = (val: string) => {
     setPriceUSD(val);
     if (val && !isNaN(Number(val))) {
-      setPriceCrypto((Number(val) / ETH_RATE).toFixed(4));
+      // USDC is 1:1 with USD
+      setPriceCrypto(parseFloat(val).toFixed(2));
     } else {
       setPriceCrypto('');
     }
@@ -48,7 +47,8 @@ const SellerDashboard: React.FC = () => {
   const handlePriceCryptoChange = (val: string) => {
     setPriceCrypto(val);
     if (val && !isNaN(Number(val))) {
-      setPriceUSD((Number(val) * ETH_RATE).toFixed(2));
+      // USDC is 1:1 with USD
+      setPriceUSD(parseFloat(val).toFixed(2));
     } else {
       setPriceUSD('');
     }
@@ -118,7 +118,7 @@ const SellerDashboard: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-gray-500 font-medium">Total Sales (Crypto)</p>
-              <h3 className="text-3xl font-bold text-white mt-1">{totalSalesCrypto.toFixed(2)} ETH</h3>
+              <h3 className="text-3xl font-bold text-white mt-1">{totalSalesCrypto.toFixed(2)} USDC</h3>
             </div>
           </div>
 
@@ -306,9 +306,9 @@ const SellerDashboard: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Crypto Price (ETH)</label>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Crypto Price (USDC)</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">Ξ</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">$</span>
                   <input 
                     type="number" 
                     step="0.0001" 

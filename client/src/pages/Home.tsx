@@ -67,9 +67,7 @@ const RotatingBentoCard: React.FC<RotatingBentoCardProps> = ({ products, interva
         </h3>
         <div className="flex items-center justify-between">
           <div className={`text-lg font-bold ${currentProduct.category === 'NFTs' || currentProduct.category === 'Digital Assets' ? 'text-primary' : 'text-white'} transition-opacity duration-500 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
-            {currentProduct.category === 'NFTs' || currentProduct.category === 'Digital Assets' 
-              ? `${currentProduct.priceCrypto} ETH` 
-              : `$${currentProduct.priceUSD}`}
+            {`${currentProduct.priceCrypto.toFixed(2)} USDC`}
           </div>
           <button 
             onClick={(e) => onAddToCart(e, currentProduct)}
@@ -201,7 +199,7 @@ const Home: React.FC = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                          <div className="text-xs font-bold text-white line-clamp-1">{asset.name}</div>
-                         <div className="text-gray-400 text-[10px] font-mono mt-0.5">{asset.priceCrypto} ETH</div>
+                         <div className="text-gray-400 text-[10px] font-mono mt-0.5">{asset.priceCrypto.toFixed(2)} USDC</div>
                       </div>
                       <button 
                         onClick={(e) => handleAddToCart(e, asset)}
@@ -433,7 +431,7 @@ const Home: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-bold text-white line-clamp-1 mb-1">{item.name}</div>
                       <div className="flex items-center gap-2">
-                        <span className="text-primary font-bold">{item.priceCrypto} ETH</span>
+                        <span className="text-primary font-bold">{item.priceCrypto.toFixed(2)} USDC</span>
                       </div>
                     </div>
                     <button 

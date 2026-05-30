@@ -1,0 +1,19 @@
+{
+  "name": "@ababil/supabase",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.3.0",
+    "@supabase/supabase-js": "^2.43.0",
+    "@ababil/types": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

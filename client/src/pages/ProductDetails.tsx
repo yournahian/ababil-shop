@@ -172,7 +172,7 @@ const ProductDetails: React.FC = () => {
                 </div>
                 <div className="pb-1">
                   <div className="text-sm text-gray-500 mb-1">Crypto Price</div>
-                  <div className="text-2xl text-primary font-mono">{currentPriceCrypto} ETH</div>
+                  <div className="text-2xl text-primary font-mono">{Number(currentPriceCrypto).toFixed(2)} USDC</div>
                 </div>
               </div>
 

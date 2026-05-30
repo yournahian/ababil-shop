@@ -3,9 +3,12 @@ node_modules/
 **/node_modules/
 
 # Next.js
-client/.next/
-client/out/
-client/build/
+.next/
+**/.next/
+out/
+**/out/
+build/
+**/build/
 
 # Environment variables
 .env
