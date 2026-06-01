@@ -22,7 +22,6 @@ export default function SignupPage() {
   useEffect(() => {
     if (profile) {
       router.push('/shop');
-      router.refresh();
     }
   }, [profile, router]);
 

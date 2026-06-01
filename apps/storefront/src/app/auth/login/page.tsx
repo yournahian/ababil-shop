@@ -23,7 +23,6 @@ function AbabilLoginForm() {
   useEffect(() => {
     if (profile) {
       router.push(redirect);
-      router.refresh();
     }
   }, [profile, router, redirect]);
 
