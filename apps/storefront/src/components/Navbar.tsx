@@ -127,7 +127,7 @@ export default function Navbar() {
           <Link href="/shop" className="text-gray-300 hover:text-primary transition-colors">Marketplace</Link>
           <Link href="/leaderboard" className="text-gray-300 hover:text-primary transition-colors">Leaderboard</Link>
           {profile?.role === 'vendor' && (
-            <Link href="http://localhost:3001" target="_blank" className="text-secondary hover:text-secondary-light transition-colors flex items-center gap-1">
+            <Link href="https://system-ababilshop.vercel.app/" target="_blank" className="text-secondary hover:text-secondary-light transition-colors flex items-center gap-1">
               <LayoutDashboard className="w-3.5 h-3.5" /> Seller Dashboard
             </Link>
           )}

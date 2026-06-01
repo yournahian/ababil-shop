@@ -65,9 +65,12 @@ export default function VendorOnboardPage() {
     }
 
     try {
+      console.log('[Onboard] Starting onboarding for profile:', profile.id);
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      console.log('[Onboard] Generated slug:', slug);
 
       // 1. Insert into public.vendors
+      console.log('[Onboard] Inserting into public.vendors...');
       const { error: vendorError } = await supabase
         .from('vendors')
         .insert({
@@ -83,23 +86,44 @@ export default function VendorOnboardPage() {
           level: 4
         });
 
-      if (vendorError) throw vendorError;
+      if (vendorError) {
+        console.error('[Onboard] public.vendors insert error:', vendorError);
+        throw new Error(`Vendor Profile Error: ${vendorError.message}`);
+      }
+      console.log('[Onboard] public.vendors insert success!');
 
       // 2. Update profiles.role to 'vendor'
+      console.log('[Onboard] Updating profiles.role to vendor...');
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ role: 'vendor' })
         .eq('id', profile.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('[Onboard] profiles update error:', profileError);
+        throw new Error(`Profile Role Update Error: ${profileError.message}`);
+      }
+      console.log('[Onboard] profiles update success!');
 
-      // 3. Award XP transaction
-      await supabase.from('xp_transactions').insert({
-        user_id: profile.id,
-        amount: 1500,
-        source: 'vendor_onboard',
-        description: 'Provisioned as high-prestige vendor account. Welcome XP bonus unlocked!'
-      });
+      // 3. Award XP transaction (via xp-rewards Edge Function since xp_transactions is API read-only)
+      console.log('[Onboard] Invoking xp-rewards Edge Function...');
+      try {
+        const { error: xpError } = await supabase.functions.invoke('xp-rewards', {
+          body: {
+            userId: profile.id,
+            amount: 1500,
+            source: 'vendor_onboard',
+            description: 'Provisioned as high-prestige vendor account. Welcome XP bonus unlocked!'
+          }
+        });
+        if (xpError) {
+          console.error('[Onboard] xp-rewards Edge Function call returned error:', xpError);
+        } else {
+          console.log('[Onboard] xp-rewards Edge Function success!');
+        }
+      } catch (fErr) {
+        console.error('[Onboard] Failed to invoke xp-rewards Edge Function:', fErr);
+      }
 
       // Update local Zustand auth state
       setProfile({
@@ -109,8 +133,10 @@ export default function VendorOnboardPage() {
         level: Math.floor(1 + Math.sqrt((profile.xp + 1500) / 100))
       });
 
+      console.log('[Onboard] Onboarding finished successfully!');
       setSuccess(true);
     } catch (err: any) {
+      console.error('[Onboard] Onboarding Exception:', err);
       setError(err.message || 'Onboarding registration timed out.');
     } finally {
       setLoading(false);
@@ -163,7 +189,7 @@ export default function VendorOnboardPage() {
 
           <div className="pt-4 border-t border-card-border/60">
             <Link
-              href="http://localhost:3001"
+              href="https://system-ababilshop.vercel.app/"
               target="_blank"
               className="w-full py-3 bg-gradient-to-r from-secondary to-secondary-light text-black font-black text-xs tracking-wider rounded-xl hover:shadow-neon-pink transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2"
             >
