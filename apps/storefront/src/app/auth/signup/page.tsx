@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Lock, Mail, User, ShieldAlert, Award } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -19,6 +19,12 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    if (!isSupabaseConfigured) {
+      setError('Supabase environment variables are missing or misconfigured. Please verify that NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are correctly configured (with https://) in your Vercel project settings.');
+      setLoading(false);
+      return;
+    }
 
     try {
       const { error: authError } = await supabase.auth.signUp({
