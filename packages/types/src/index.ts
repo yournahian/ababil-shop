@@ -68,6 +68,8 @@ export interface Product {
   status: ProductStatus;
   moq?: number;
   tieredPricing?: TieredPrice[];
+  seoTitle?: string;
+  seoDesc?: string;
   createdAt: string;
   updatedAt: string;
   vendor?: Partial<Vendor>;
