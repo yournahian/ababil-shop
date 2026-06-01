@@ -6,25 +6,26 @@ import Link from 'next/link';
 import { Lock, Mail, ShieldAlert } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
 
-import { useAuthStore } from '../../../lib/store';
-
 function AbabilLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/shop';
-  const { profile } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Automatically redirect if already logged in
+  // Redirect to target URL if already logged in on mount
   useEffect(() => {
-    if (profile) {
-      router.push(redirect);
-    }
-  }, [profile, router, redirect]);
+    const checkUserSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        router.push(redirect);
+      }
+    };
+    checkUserSession();
+  }, [router, redirect]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -6,11 +6,8 @@ import Link from 'next/link';
 import { Lock, Mail, User, ShieldAlert, Award } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
 
-import { useAuthStore } from '../../../lib/store';
-
 export default function SignupPage() {
   const router = useRouter();
-  const { profile } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -18,12 +15,16 @@ export default function SignupPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  // Automatically redirect if user gets logged in (e.g. after successful signup when email confirmation is disabled)
+  // Redirect to shop if already logged in on mount
   useEffect(() => {
-    if (profile) {
-      router.push('/shop');
-    }
-  }, [profile, router]);
+    const checkUserSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        router.push('/shop');
+      }
+    };
+    checkUserSession();
+  }, [router]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +38,7 @@ export default function SignupPage() {
     }
 
     try {
-      const { error: authError } = await supabase.auth.signUp({
+      const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -50,7 +51,12 @@ export default function SignupPage() {
 
       if (authError) throw authError;
 
-      setSuccess(true);
+      // If email confirmation is disabled, user is logged in instantly
+      if (data?.session) {
+        router.push('/shop');
+      } else {
+        setSuccess(true);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to initialize account profile.');
     } finally {
