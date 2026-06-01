@@ -160,6 +160,7 @@ export interface XpTransaction {
   source: XpSourceType;
   description: string | null;
   createdAt: string;
+  created_at?: string;
 }
 
 export interface DeliveryJob {
