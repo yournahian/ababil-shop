@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle2, ShieldCheck, Trophy, Sparkles, Navigation, Flame, Eye } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Order } from '@ababil/types';
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const orderId = searchParams.get('orderId');
@@ -238,5 +238,17 @@ export default function CheckoutSuccessPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="py-20 text-center font-mono text-xs text-gray-500">
+        [ LOADING TRANSACTION TELEMETRY... ]
+      </div>
+    }>
+      <CheckoutSuccessContent />
+    </Suspense>
   );
 }
