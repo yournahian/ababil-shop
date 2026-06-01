@@ -1,19 +1,30 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Lock, Mail, User, ShieldAlert, Award } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
 
+import { useAuthStore } from '../../../lib/store';
+
 export default function SignupPage() {
   const router = useRouter();
+  const { profile } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // Automatically redirect if user gets logged in (e.g. after successful signup when email confirmation is disabled)
+  useEffect(() => {
+    if (profile) {
+      router.push('/shop');
+      router.refresh();
+    }
+  }, [profile, router]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,20 +1,31 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Lock, Mail, ShieldAlert } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
 
+import { useAuthStore } from '../../../lib/store';
+
 function AbabilLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/shop';
+  const { profile } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Automatically redirect if already logged in
+  useEffect(() => {
+    if (profile) {
+      router.push(redirect);
+      router.refresh();
+    }
+  }, [profile, router, redirect]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
