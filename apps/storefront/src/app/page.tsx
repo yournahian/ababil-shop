@@ -146,7 +146,7 @@ export default function HomePage() {
       <FlashSaleBanner />
       
       {/* E-Commerce Bento Grid matching original exactly */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-[340px] mt-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-[260px] md:auto-rows-[340px] mt-6">
         
         {/* 1. Hero Product Card (2x2) */}
         <Link 

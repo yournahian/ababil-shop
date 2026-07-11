@@ -39,7 +39,11 @@ export async function middleware(request: NextRequest) {
   });
 
   // This will refresh the session if expired
-  await supabase.auth.getUser();
+  try {
+    await supabase.auth.getUser();
+  } catch (err) {
+    console.warn('[Middleware] Failed to refresh Supabase auth session (Supabase may be paused or offline):', err);
+  }
 
   return response;
 }

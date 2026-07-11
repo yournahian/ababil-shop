@@ -4,6 +4,7 @@ import './globals.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import AuthModal from '../components/AuthModal';
+import AgentWidget from '../components/AgentWidget';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -34,7 +35,9 @@ export default function RootLayout({
         </main>
         <Footer />
         <AuthModal />
+        <AgentWidget />
       </body>
     </html>
   );
 }
+

@@ -235,9 +235,9 @@ async function addChainToWallet(chainId: number): Promise<void> {
     5042002: {
       chainId: '0x4CEEA2',
       chainName: 'Arc Testnet',
-      nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-      rpcUrls: ['https://rpc.arc-testnet.xyz'],
-      blockExplorerUrls: ['https://explorer.arc-testnet.xyz'],
+      nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
+      rpcUrls: ['https://rpc.testnet.arc.network'],
+      blockExplorerUrls: ['https://testnet.arcscan.app'],
     },
   };
   const params = CHAINS[chainId];

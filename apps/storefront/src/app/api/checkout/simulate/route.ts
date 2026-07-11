@@ -188,6 +188,42 @@ export async function POST(req: NextRequest) {
 
     if (orderError) throw orderError;
 
+    // If agent-initiated / RFQ order, update the quote status and RFQ status
+    if (order.rfq_quote_id) {
+      // Get the RFQ ID from the quote
+      const { data: quote } = await adminSupabase
+        .from('vendor_quotes')
+        .select('rfq_id')
+        .eq('id', order.rfq_quote_id)
+        .maybeSingle();
+
+      if (quote) {
+        // Accept the chosen quote
+        await adminSupabase
+          .from('vendor_quotes')
+          .update({
+            status: 'accepted',
+            escrow_status: 'released', // Direct payout
+            escrow_released_at: new Date().toISOString()
+          })
+          .eq('id', order.rfq_quote_id);
+
+        // Reject other competitor quotes
+        await adminSupabase
+          .from('vendor_quotes')
+          .update({ status: 'rejected' })
+          .eq('rfq_id', quote.rfq_id)
+          .neq('id', order.rfq_quote_id)
+          .eq('status', 'pending');
+
+        // Update RFQ status to accepted
+        await adminSupabase
+          .from('rfqs')
+          .update({ status: 'accepted' })
+          .eq('id', quote.rfq_id);
+      }
+    }
+
     // Spawn Delivery Job (bypass RLS)
     const estDelivery = new Date();
     estDelivery.setMinutes(estDelivery.getMinutes() + 15);

@@ -91,6 +91,42 @@ serve(async (req) => {
 
       if (orderUpdateError) throw orderUpdateError;
 
+      // If agent-initiated / RFQ order, update the quote status and RFQ status
+      if (order.rfq_quote_id) {
+        // Get the RFQ ID from the quote
+        const { data: quote } = await supabase
+          .from("vendor_quotes")
+          .select("rfq_id")
+          .eq("id", order.rfq_quote_id)
+          .maybeSingle();
+
+        if (quote) {
+          // Accept the chosen quote
+          await supabase
+            .from("vendor_quotes")
+            .update({
+              status: "accepted",
+              escrow_status: "released", // Direct payout
+              escrow_released_at: new Date().toISOString()
+            })
+            .eq("id", order.rfq_quote_id);
+
+          // Reject other competitor quotes
+          await supabase
+            .from("vendor_quotes")
+            .update({ status: "rejected" })
+            .eq("rfq_id", quote.rfq_id)
+            .neq("id", order.rfq_quote_id)
+            .eq("status", "pending");
+
+          // Update RFQ status to accepted
+          await supabase
+            .from("rfqs")
+            .update({ status: "accepted" })
+            .eq("id", quote.rfq_id);
+        }
+      }
+
       // Create simulated Delivery Job
       const estDelivery = new Date();
       estDelivery.setMinutes(estDelivery.getMinutes() + 15); // Simulated ETA: 15 mins

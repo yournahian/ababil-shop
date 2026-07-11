@@ -43,7 +43,8 @@ import {
   UserCheck,
   Percent,
   Download,
-  Key
+  Key,
+  Cpu
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Product, Order, Vendor } from '@ababil/types';
@@ -78,7 +79,8 @@ type VendorTab =
   | 'payouts'
   | 'teams'
   | 'security'
-  | 'settings';
+  | 'settings'
+  | 'procurement';
 
 export default function CombinedDashboardPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -86,6 +88,25 @@ export default function CombinedDashboardPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Procurement & AI Agent state
+  const [agentSettings, setAgentSettings] = useState<any>({
+    autoReplyEnabled: false,
+    maxDiscountPct: 10.00,
+    minMarginPct: 20.00,
+    preferredDeliveryDays: 7,
+    autoQuoteCategories: [],
+    agentPersonaNotes: ''
+  });
+  const [rfqsList, setRfqsList] = useState<any[]>([]);
+  const [loadingProcurement, setLoadingProcurement] = useState(false);
+  const [quotingRfqId, setQuotingRfqId] = useState<string | null>(null);
+  
+  // Manual quote form state
+  const [quoteUnitPrice, setQuoteUnitPrice] = useState('');
+  const [quoteDeliveryDays, setQuoteDeliveryDays] = useState('7');
+  const [quoteNotes, setQuoteNotes] = useState('');
+  const [submittingQuote, setSubmittingQuote] = useState(false);
 
   // Login form state inside dashboard
   const [authEmail, setAuthEmail] = useState('');
@@ -467,6 +488,87 @@ export default function CombinedDashboardPage() {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  // --- PROCUREMENT & AI AGENT INTEGRATION ---
+  const fetchProcurementData = async () => {
+    setLoadingProcurement(true);
+    try {
+      const settingsRes = await fetch('/api/vendor/agent/settings');
+      const settingsData = await settingsRes.json();
+      if (settingsData.success && settingsData.settings) {
+        setAgentSettings(settingsData.settings);
+      }
+
+      const rfqRes = await fetch('/api/vendor/agent/rfq');
+      const rfqData = await rfqRes.json();
+      if (rfqData.success && rfqData.rfqs) {
+        setRfqsList(rfqData.rfqs);
+      }
+    } catch (err) {
+      console.error('Failed to load procurement data:', err);
+    } finally {
+      setLoadingProcurement(false);
+    }
+  };
+
+  const handleSaveAgentSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/vendor/agent/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(agentSettings)
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Vendor Agent settings updated successfully!');
+      } else {
+        alert(data.error || 'Failed to update settings');
+      }
+    } catch (err) {
+      console.error('Error saving agent settings:', err);
+      alert('Network error while saving settings');
+    }
+  };
+
+  const handleSubmitManualQuote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quotingRfqId) return;
+    setSubmittingQuote(true);
+    try {
+      const res = await fetch('/api/vendor/agent/rfq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rfqId: quotingRfqId,
+          unitPriceUsdc: parseFloat(quoteUnitPrice),
+          deliveryDays: parseInt(quoteDeliveryDays),
+          notes: quoteNotes
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Quote submitted successfully!');
+        setQuotingRfqId(null);
+        setQuoteUnitPrice('');
+        setQuoteNotes('');
+        await fetchProcurementData();
+      } else {
+        alert(data.error || 'Failed to submit quote');
+      }
+    } catch (err) {
+      console.error('Error submitting quote:', err);
+      alert('Network error while submitting quote');
+    } finally {
+      setSubmittingQuote(false);
+    }
+  };
+
+  useEffect(() => {
+    if (vendorTab === 'procurement' && vendor) {
+      fetchProcurementData();
+    }
+  }, [vendorTab, vendor]);
 
   // --- SELLER MUTATIONS ---
   const handlePublish = async (e: React.FormEvent) => {
@@ -1069,9 +1171,7 @@ export default function CombinedDashboardPage() {
       );
     }
 
-    const totalSales = orders
-      .filter((o) => o.paymentStatus === 'paid')
-      .reduce((sum, o) => sum + o.totalAmount, 0) + 245.00;
+    const totalSales = 245.00;
 
     return (
       <div className="flex min-h-screen bg-black text-white font-sans">
@@ -1100,7 +1200,8 @@ export default function CombinedDashboardPage() {
                 { id: 'payouts', name: 'Payouts & Ledger', icon: Coins },
                 { id: 'teams', name: 'Team RBAC', icon: UserCheck },
                 { id: 'security', name: 'Security & 2FA', icon: Lock },
-                { id: 'settings', name: 'Store Profile', icon: Sliders }
+                { id: 'settings', name: 'Store Profile', icon: Sliders },
+                { id: 'procurement', name: 'AI Auto-Quotes & RFQs', icon: Cpu }
               ].map(tab => {
                 const TabIcon = tab.icon;
                 return (
@@ -2014,6 +2115,319 @@ export default function CombinedDashboardPage() {
             </div>
           )}
 
+          {/* VENDOR TAB 12: PROCUREMENT & AI AGENT */}
+          {vendorTab === 'procurement' && (
+            <div className="space-y-6 font-mono text-xs animate-in fade-in duration-300">
+              {/* 1. Vendor Agent Settings */}
+              <div className="bg-[#0a0a0a] border border-white/[0.08] p-6 rounded-2xl space-y-6">
+                <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                  <h3 className="text-xs font-bold text-white uppercase flex items-center gap-2">
+                    <Cpu className="w-4 h-4 text-primary animate-pulse" />
+                    [ AI AGENT AUTO-QUOTE SETTINGS ]
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-gray-500">AUTO-QUOTE PROCESSOR</span>
+                    <span className={`w-2 h-2 rounded-full ${agentSettings.autoReplyEnabled ? 'bg-primary animate-ping' : 'bg-red-500'}`} />
+                  </div>
+                </div>
+
+                <form onSubmit={handleSaveAgentSettings} className="space-y-6 font-sans">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-black/30 border border-card-border p-4 rounded-xl space-y-4">
+                      <h4 className="text-[10px] text-primary font-mono font-bold uppercase tracking-wider">[ RUNTIME PARAMETERS ]</h4>
+                      
+                      {/* Toggle */}
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] text-gray-400 font-mono uppercase">ENABLE AUTO-REPLY</label>
+                        <button
+                          type="button"
+                          onClick={() => setAgentSettings((prev: any) => ({ ...prev, autoReplyEnabled: !prev.autoReplyEnabled }))}
+                          className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none ${
+                            agentSettings.autoReplyEnabled ? 'bg-primary' : 'bg-card-border'
+                          }`}
+                        >
+                          <div
+                            className={`bg-black w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${
+                              agentSettings.autoReplyEnabled ? 'translate-x-6' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {/* Preferred Delivery Days */}
+                      <div className="space-y-1.5 font-mono text-xs">
+                        <label className="text-[10px] text-gray-400 uppercase">PREFLIGHT DELIVERY DAYS</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="90"
+                          value={agentSettings.preferredDeliveryDays}
+                          onChange={(e) => setAgentSettings((prev: any) => ({ ...prev, preferredDeliveryDays: parseInt(e.target.value) || 7 }))}
+                          className="w-full bg-black border border-white/20 rounded-xl px-4 py-2.5 text-white font-sans text-xs focus:outline-none focus:border-primary"
+                        />
+                      </div>
+
+                      {/* Max Discount Slider */}
+                      <div className="space-y-1.5 font-mono text-xs">
+                        <div className="flex justify-between">
+                          <label className="text-[10px] text-gray-400 uppercase">MAX DISCOUNT CEILING</label>
+                          <span className="text-primary font-bold">{agentSettings.maxDiscountPct}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={agentSettings.maxDiscountPct}
+                          onChange={(e) => setAgentSettings((prev: any) => ({ ...prev, maxDiscountPct: parseFloat(e.target.value) }))}
+                          className="w-full accent-primary bg-black h-1 rounded-lg cursor-pointer"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="bg-black/30 border border-card-border p-4 rounded-xl space-y-4">
+                      <h4 className="text-[10px] text-secondary font-mono font-bold uppercase tracking-wider">[ PROCUREMENT CATEGORIES ]</h4>
+                      <p className="text-[9px] text-gray-500 leading-normal font-sans">
+                        Select which categories the AI Agent is authorized to automatically generate bids and quotes for.
+                      </p>
+                      
+                      {/* Checkboxes */}
+                      <div className="grid grid-cols-2 gap-2 text-[10px] font-mono text-gray-400">
+                        {['Merchandise', 'Printing', 'Software Development', 'Design', 'Marketing', 'Logistics'].map((cat) => {
+                          const isChecked = agentSettings.autoQuoteCategories?.includes(cat);
+                          return (
+                            <label key={cat} className="flex items-center gap-2 cursor-pointer hover:text-white transition-colors">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {
+                                  setAgentSettings((prev: any) => {
+                                    const cats = prev.autoQuoteCategories || [];
+                                    const nextCats = cats.includes(cat)
+                                      ? cats.filter((c: string) => c !== cat)
+                                      : [...cats, cat];
+                                    return { ...prev, autoQuoteCategories: nextCats };
+                                  });
+                                }}
+                                className="rounded border-white/20 bg-black text-primary focus:ring-0"
+                              />
+                              <span>{cat}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Agent Notes */}
+                  <div className="space-y-2 font-mono">
+                    <label className="text-[10px] text-gray-400 uppercase">CUSTOM AI COGNITIVE PERSONA NOTES / CONSTRAINTS</label>
+                    <textarea
+                      value={agentSettings.agentPersonaNotes || ''}
+                      onChange={(e) => setAgentSettings((prev: any) => ({ ...prev, agentPersonaNotes: e.target.value }))}
+                      rows={3}
+                      placeholder="e.g. Highlight our 100% completion rate. Never quote less than 1.50 USDC per unit unless order size exceeds 1000..."
+                      className="w-full bg-black border border-white/20 rounded-xl p-4 text-white font-sans text-xs focus:outline-none focus:border-primary leading-relaxed"
+                    />
+                  </div>
+
+                  <div className="pt-4 border-t border-white/10 flex justify-end font-mono">
+                    <button
+                      type="submit"
+                      className="px-6 py-2.5 bg-primary text-black font-black uppercase text-[10px] rounded-xl hover:shadow-[0_0_15px_rgba(0,255,255,0.4)] transition-all"
+                    >
+                      SAVE AGENT SETTINGS
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* 2. RFQ Inbox (Manual Bidding) */}
+              <div className="bg-[#0a0a0a] border border-white/[0.08] p-6 rounded-2xl space-y-6">
+                <h3 className="text-xs font-bold text-white uppercase flex items-center gap-2 border-b border-white/5 pb-3">
+                  <FileText className="w-4 h-4 text-secondary" />
+                  [ PROCUREMENT RFQ INBOX — MANUAL BIDDING ]
+                </h3>
+
+                {quotingRfqId ? (
+                  /* Manual Bid Form */
+                  <form onSubmit={handleSubmitManualQuote} className="space-y-4 bg-black/30 border border-card-border p-5 rounded-xl animate-in fade-in duration-300">
+                    <h4 className="text-[10px] text-primary font-bold uppercase tracking-wider border-b border-white/5 pb-2">
+                      SUBMIT VALUE PROPOSAL
+                    </h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1.5 font-mono">
+                        <label className="text-[10px] text-gray-500 uppercase block">UNIT BID PRICE (USDC)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          required
+                          value={quoteUnitPrice}
+                          onChange={(e) => setQuoteUnitPrice(e.target.value)}
+                          className="w-full bg-black border border-white/20 rounded-xl px-4 py-2.5 text-white text-xs focus:outline-none focus:border-primary font-sans"
+                        />
+                      </div>
+                      <div className="space-y-1.5 font-mono">
+                        <label className="text-[10px] text-gray-500 uppercase block">DELIVERY SPEED (DAYS)</label>
+                        <input
+                          type="number"
+                          required
+                          value={quoteDeliveryDays}
+                          onChange={(e) => setQuoteDeliveryDays(e.target.value)}
+                          className="w-full bg-black border border-white/20 rounded-xl px-4 py-2.5 text-white text-xs focus:outline-none focus:border-primary font-sans"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 font-mono">
+                      <label className="text-[10px] text-gray-500 uppercase block">PROPOSAL MEMO / SPECS NOTES</label>
+                      <textarea
+                        value={quoteNotes}
+                        onChange={(e) => setQuoteNotes(e.target.value)}
+                        rows={2}
+                        placeholder="Detail delivery logistics, material choices, or custom specs..."
+                        className="w-full bg-black border border-white/20 rounded-xl p-3 text-white text-xs focus:outline-none focus:border-primary font-sans"
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2 font-mono">
+                      <button
+                        type="button"
+                        onClick={() => setQuotingRfqId(null)}
+                        className="px-4 py-2 bg-card hover:bg-card-hover border border-card-border text-[9px] font-bold rounded-xl transition-all"
+                      >
+                        CANCEL
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={submittingQuote}
+                        className="px-5 py-2 bg-primary text-black text-[9px] font-black uppercase rounded-xl hover:shadow-[0_0_10px_rgba(0,255,255,0.4)] transition-all flex items-center gap-1.5 animate-pulse"
+                      >
+                        {submittingQuote && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                        SUBMIT BID
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left font-sans text-xs">
+                    <thead>
+                      <tr className="border-b border-white/10 text-[9px] font-mono text-gray-500 uppercase">
+                        <th className="pb-3">RFQ TITLE</th>
+                        <th className="pb-3">CATEGORY</th>
+                        <th className="pb-3">REQUIRED QTY</th>
+                        <th className="pb-3">MAX BUDGET</th>
+                        <th className="pb-3 text-right">ACTION</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.04]">
+                      {rfqsList.filter(r => !r.myQuote).length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-6 text-center text-gray-500 font-mono">
+                            NO NEW OPEN RFQS AWAITING BIDDING.
+                          </td>
+                        </tr>
+                      ) : (
+                        rfqsList.filter(r => !r.myQuote).map((rfq) => (
+                          <tr key={rfq.id} className="hover:bg-white/[0.02] transition-colors group">
+                            <td className="py-4 font-mono font-bold text-white group-hover:text-primary transition-colors">
+                              {rfq.title}
+                              <span className="block text-[8px] text-gray-500 font-sans font-normal mt-0.5 max-w-[250px] truncate">
+                                {rfq.description}
+                              </span>
+                            </td>
+                            <td className="py-4 font-mono text-gray-400">{rfq.category}</td>
+                            <td className="py-4 font-mono text-gray-400">{rfq.quantity} units</td>
+                            <td className="py-4 font-mono text-primary font-bold">{rfq.budgetUsdc.toFixed(2)} USDC</td>
+                            <td className="py-4 text-right">
+                              <button
+                                onClick={() => {
+                                  setQuotingRfqId(rfq.id);
+                                  setQuoteUnitPrice((rfq.budgetUsdc / rfq.quantity).toFixed(2));
+                                }}
+                                className="px-3 py-1.5 bg-primary text-black font-black font-mono text-[9px] rounded-lg uppercase hover:shadow-[0_0_10px_rgba(0,255,255,0.4)] transition-all"
+                              >
+                                QUOTE
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* 3. My Quotes (Submitted Proposal History) */}
+              <div className="bg-[#0a0a0a] border border-white/[0.08] p-6 rounded-2xl space-y-6">
+                <h3 className="text-xs font-bold text-white uppercase flex items-center gap-2 border-b border-white/5 pb-3">
+                  <Coins className="w-4 h-4 text-primary" />
+                  [ SUBMITTED PROPOSALS LOGS ]
+                </h3>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left font-sans text-xs">
+                    <thead>
+                      <tr className="border-b border-white/10 text-[9px] font-mono text-gray-500 uppercase">
+                        <th className="pb-3">RFQ TARGET</th>
+                        <th className="pb-3">MY PRICE</th>
+                        <th className="pb-3">LEAD TIME</th>
+                        <th className="pb-3">AUTO-GEN</th>
+                        <th className="pb-3 text-right">STATUS</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.04] font-mono">
+                      {rfqsList.filter(r => r.myQuote).length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-6 text-center text-gray-500">
+                            NO SUBMITTED PROPOSALS RECORDED YET.
+                          </td>
+                        </tr>
+                      ) : (
+                        rfqsList.filter(r => r.myQuote).map((rfq) => {
+                          const q = rfq.myQuote;
+                          
+                          const getQuoteBadge = (status: string) => {
+                            switch (status) {
+                              case 'pending':
+                                return 'bg-yellow-500/10 border border-yellow-500/30 text-yellow-500';
+                              case 'accepted':
+                                return 'bg-primary/15 border border-primary/40 text-primary shadow-neon-cyan';
+                              case 'rejected':
+                                return 'bg-red-500/10 border border-red-500/30 text-red-500';
+                              default:
+                                return 'bg-gray-500/10 border border-white/10 text-gray-400';
+                            }
+                          };
+
+                          return (
+                            <tr key={rfq.id} className="hover:bg-white/[0.02] transition-colors">
+                              <td className="py-4 text-white font-bold">{rfq.title}</td>
+                              <td className="py-4 font-bold text-primary-light">{q.totalPriceUsdc.toFixed(2)} USDC</td>
+                              <td className="py-4 text-gray-400">{q.deliveryDays} DAYS</td>
+                              <td className="py-4">
+                                {q.autoGenerated ? (
+                                  <span className="text-secondary font-bold">YES</span>
+                                ) : (
+                                  <span className="text-gray-600">NO</span>
+                                )}
+                              </td>
+                              <td className="py-4 text-right">
+                                <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${getQuoteBadge(q.status)}`}>
+                                  {q.status}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     );

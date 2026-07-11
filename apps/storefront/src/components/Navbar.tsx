@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingCart, LogOut, LayoutDashboard, Store } from 'lucide-react';
+import { LogOut, LayoutDashboard, Menu, X, Bot } from 'lucide-react';
 import { useCartStore, useAuthStore } from '../lib/store';
 import { supabase } from '../lib/supabase';
 
@@ -23,6 +23,7 @@ export default function Navbar() {
   const [localSearch, setLocalSearch] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
   const searchRef = useRef<HTMLDivElement>(null);
 
@@ -115,6 +116,7 @@ export default function Navbar() {
   };
 
   return (
+    <>
     <nav className="fixed top-0 left-0 right-0 w-full z-50 glass px-6 py-4 font-sans">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo matching exact original logo */}
@@ -126,6 +128,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-6 text-sm font-medium">
           <Link href="/shop" className="text-gray-300 hover:text-primary transition-colors">Marketplace</Link>
           <Link href="/leaderboard" className="text-gray-300 hover:text-primary transition-colors">Leaderboard</Link>
+          <Link href="/agent" className="text-gray-300 hover:text-primary transition-colors">AI Copilot</Link>
           {profile?.role === 'vendor' && (
             <Link href="https://system-ababilshop.vercel.app/" target="_blank" className="text-secondary hover:text-secondary-light transition-colors flex items-center gap-1">
               <LayoutDashboard className="w-3.5 h-3.5" /> Seller Dashboard
@@ -201,7 +204,7 @@ export default function Navbar() {
         </div>
 
         {/* User / Actions widgets */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <Link href="/cart" className="relative p-2 text-gray-300 hover:text-primary transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -214,16 +217,19 @@ export default function Navbar() {
           </Link>
 
           {profile ? (
-            <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-4">
               <Link href="/account/profile" className="text-xs text-gray-400 hover:text-white uppercase font-mono">
                 [ PROFILE ]
+              </Link>
+              <Link href="/account/rfqs" className="text-xs text-gray-400 hover:text-white uppercase font-mono">
+                [ RFQS ]
               </Link>
               <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-red-500 uppercase font-mono">
                 Logout
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-3">
               <Link href="/auth/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
                 Log In
               </Link>
@@ -235,8 +241,91 @@ export default function Navbar() {
               </Link>
             </div>
           )}
+
+          {/* Mobile Hamburger */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden p-2 rounded-xl text-gray-400 hover:text-primary hover:bg-white/[0.05] transition-colors"
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
       </div>
     </nav>
+
+    {/* Mobile Drawer */}
+    <div
+      className={`fixed top-[64px] left-0 right-0 z-40 border-b border-white/10 bg-black/95 backdrop-blur-xl transition-all duration-300 overflow-hidden md:hidden ${
+        mobileOpen ? 'max-h-[90vh] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
+      }`}
+    >
+      <div className="px-4 py-4 space-y-3 max-w-7xl mx-auto">
+        {/* Mobile Search */}
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search marketplace..."
+            value={localSearch}
+            onChange={(e) => { setLocalSearch(e.target.value); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setMobileOpen(false);
+                router.push(`/shop?q=${encodeURIComponent(localSearch)}`);
+              }
+            }}
+            className="w-full bg-card/50 border border-white/20 rounded-full py-2.5 px-5 text-sm focus:outline-none focus:border-primary transition-colors text-white placeholder-gray-400"
+          />
+          <svg className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+
+        {/* Mobile Nav Links */}
+        <div className="space-y-1">
+          <Link href="/shop" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-primary hover:bg-white/[0.04] transition-colors">
+            Marketplace
+          </Link>
+          <Link href="/leaderboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-primary hover:bg-white/[0.04] transition-colors">
+            Leaderboard
+          </Link>
+          <Link href="/agent" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-primary hover:bg-white/[0.04] transition-colors">
+            <Bot className="w-4 h-4" /> AI Copilot
+          </Link>
+          {profile?.role === 'vendor' && (
+            <Link href="https://system-ababilshop.vercel.app/" target="_blank" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-secondary hover:text-secondary-light hover:bg-white/[0.04] transition-colors">
+              <LayoutDashboard className="w-4 h-4" /> Seller Dashboard
+            </Link>
+          )}
+        </div>
+
+        {/* Mobile Auth */}
+        <div className="border-t border-white/[0.06] pt-3 pb-2">
+          {profile ? (
+            <div className="flex items-center gap-2">
+              <Link href="/account/profile" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2.5 rounded-xl border border-white/10 text-xs text-gray-400 hover:text-white hover:border-white/20 transition-colors font-mono">
+                [ PROFILE ]
+              </Link>
+              <Link href="/account/rfqs" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2.5 rounded-xl border border-white/10 text-xs text-gray-400 hover:text-white hover:border-white/20 transition-colors font-mono">
+                [ RFQS ]
+              </Link>
+              <button onClick={() => { handleLogout(); setMobileOpen(false); }} className="flex-1 py-2.5 rounded-xl border border-red-500/20 text-xs text-red-400 hover:bg-red-500/10 transition-colors font-mono">
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <Link href="/auth/login" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2.5 rounded-xl border border-white/20 text-sm text-gray-300 hover:text-white transition-colors">
+                Log In
+              </Link>
+              <Link href="/auth/signup" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2.5 rounded-full border border-primary text-primary font-medium text-sm transition-all duration-300 hover:bg-primary hover:text-black">
+                Sign Up
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+    </>
   );
 }
