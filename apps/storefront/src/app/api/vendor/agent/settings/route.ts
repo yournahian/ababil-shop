@@ -8,6 +8,8 @@ function getAdminClient() {
   return createAdminClient(url, key);
 }
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/vendor/agent/settings — Get vendor agent settings
 export async function GET() {
   try {

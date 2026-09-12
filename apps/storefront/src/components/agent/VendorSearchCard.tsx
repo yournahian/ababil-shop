@@ -55,7 +55,9 @@ export default function VendorSearchCard({
                     {v.name}
                   </h4>
                   {v.verified && (
-                    <ShieldCheck className="w-3.5 h-3.5 text-primary" title="Verified Vendor" />
+                    <span title="Verified Vendor">
+                      <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+                    </span>
                   )}
                 </div>
                 {v.description && (

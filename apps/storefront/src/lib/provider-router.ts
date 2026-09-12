@@ -102,7 +102,8 @@ export function getPrimaryModel(): LanguageModel {
 // ── Minimal structural type for the DataStreamWriter ─────────────────────────
 // Matches the execute callback param type from createDataStreamResponse
 type DataStreamWriterLike = {
-  write: (data: string) => void;
+  write: (data: any) => void;
+  [key: string]: any;
 };
 
 export interface RouterStreamOptions {

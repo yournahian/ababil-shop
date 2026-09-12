@@ -353,11 +353,14 @@ export async function POST(req: Request) {
         });
 
         // Store summary safely in conversation record
-        await supabaseAdmin
-          .from('agent_conversations')
-          .update({ summary: summaryText })
-          .eq('id', conversationId)
-          .catch((err) => console.warn('Failed to update summary column:', err));
+        try {
+          await supabaseAdmin
+            .from('agent_conversations')
+            .update({ summary: summaryText })
+            .eq('id', conversationId);
+        } catch (err) {
+          console.warn('Failed to update summary column:', err);
+        }
 
         // Delete older messages keeping only the last 10 messages
         const { data: allMsgs } = await supabaseAdmin

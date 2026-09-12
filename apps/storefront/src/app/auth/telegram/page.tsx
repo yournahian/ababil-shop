@@ -34,7 +34,7 @@ function TelegramAuthContent() {
         // Update local auth store state
         setProfile({
           ...profile,
-          telegram_chat_id: String(chatId),
+          telegramChatId: String(chatId),
         });
 
         setStatus('success');

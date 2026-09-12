@@ -955,8 +955,8 @@ export const compareTopProductsTool = tool({
           .from('products')
           .select(`
             id, name, slug, description, price_usd, price_crypto, currency,
-            category, images, in_stock, inventory, rating, num_reviews,
-            moq, status,
+            category, images, in_stock, inventory, rating, num_reviews, tags,
+            moq, tiered_pricing, status,
             vendors!inner(id, name, slug, logo_url, rating, verified)
           `)
           .eq('status', 'active')
